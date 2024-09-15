@@ -56,7 +56,6 @@ const Post = ({ post }: { post: any }) => {
       ))}
       <div className="mt-10 font-medium">
         <ReactMarkdown
-          children={markdownContent}
           components={{
             code(props) {
               const { children, className, node, ...rest } = props;
@@ -77,7 +76,9 @@ const Post = ({ post }: { post: any }) => {
               );
             },
           }}
-        ></ReactMarkdown>
+        >
+          {markdownContent} 
+        </ReactMarkdown>
 
         <Link href="/">
           <span className="pb-20 inline-block mt-3 hover:text-sky-900 transition-colors duration-500">←ホームに戻る</span>
