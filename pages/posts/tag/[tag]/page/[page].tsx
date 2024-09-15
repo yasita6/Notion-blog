@@ -57,7 +57,7 @@ export const getStaticProps = async (context: any) => {
         currentTag,
         allTags,
       },
-      revalidate: 60 * 60 * 6,
+      revalidate: 10,
     };
   } catch (error) {
     console.error("データ取得エラー:", error);

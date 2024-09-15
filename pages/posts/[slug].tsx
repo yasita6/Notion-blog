@@ -26,7 +26,7 @@ export const getStaticProps = async ({
     props: {
       post,
     },
-    revalidate: 60,
+    revalidate: 10,
   };
 };
 
@@ -68,7 +68,7 @@ const Post = ({ post }: { post: any }) => {
                   style={vscDarkPlus}
                   ref={undefined}
                 >
-                  {String(children).replace(/\n$/, "")} {/* 修正箇所 */}
+                  {String(children).replace(/\n$/, "")}
                 </SyntaxHighlighter>
               ) : (
                 <code {...rest} className={className}>
