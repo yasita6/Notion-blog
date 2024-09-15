@@ -67,8 +67,9 @@ const Post = ({ post }: { post: any }) => {
                   language={match[1]}
                   style={vscDarkPlus}
                   ref={undefined}
-                  children={String(children).replace(/\n$/, "")}
-                ></SyntaxHighlighter>
+                >
+                  {String(children).replace(/\n$/, "")} {/* 修正箇所 */}
+                </SyntaxHighlighter>
               ) : (
                 <code {...rest} className={className}>
                   {children}
@@ -77,7 +78,7 @@ const Post = ({ post }: { post: any }) => {
             },
           }}
         >
-          {markdownContent} 
+          {markdownContent}
         </ReactMarkdown>
 
         <Link href="/">
