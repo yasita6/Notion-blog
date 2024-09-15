@@ -1,23 +1,28 @@
+import { NUMBER_OF_POSTS_PER_PAGE } from "@/constants/constants";
 import { Client } from "@notionhq/client";
+import { NotionToMarkdown } from "notion-to-md";
 
 const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
 
-export const getAllPosts = async () => { 
-    const posts = await notion.databases.query({
-        database_id: process.env.NOTION_DATABASE_ID as string,
-        page_size: 100,
-    });
+const n2m = new NotionToMarkdown({ notionClient: notion });
 
-    const allPosts = posts.results;
+export const getAllPosts = async () => {
+  const posts = await notion.databases.query({
+    database_id: process.env.NOTION_DATABASE_ID as string,
+    page_size: 100,
+  });
 
-    return allPosts.map((post) => {
-      return getPageMetaData(post);
-    });
+  const allPosts = posts.results;
+
+  return allPosts.map((post) => {
+    return getPageMetaData(post);
+  });
 };
 
 const getPageMetaData = (post: any) => {
+  // console.log("post", post);
   const getTags = (tags: any) => {
     const allTags = tags.map((tag: any) => {
       return tag.name;
@@ -25,6 +30,7 @@ const getPageMetaData = (post: any) => {
 
     return allTags;
   };
+
   return {
     id: post.id,
     title: post.properties.Name.title[0].plain_text,
@@ -33,4 +39,92 @@ const getPageMetaData = (post: any) => {
     slug: post.properties.Slug.rich_text[0].plain_text,
     tags: getTags(post.properties.Tags.multi_select),
   };
+};
+
+export const getSinglePost = async (slug: string) => {
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_DATABASE_ID as string,
+    filter: {
+      property: "Slug",
+      formula: {
+        string: {
+          equals: slug,
+        },
+      },
+    },
+  });
+
+  const page = response.results[0];
+  const metadata = getPageMetaData(page);
+  // console.log("metadata", metadata);
+  const mdBlocks = await n2m.pageToMarkdown(page.id);
+  const mdString = n2m.toMarkdownString(mdBlocks);
+  // console.log(mdString.parent);
+
+  return {
+    metadata,
+    markdown: mdString.parent,
+  };
+};
+
+/*Topページ用記事の取得（４つ）*/
+export const getPostsForTopPage = async (pageSize: 4) => {
+  const allposts = await getAllPosts();
+  const fourPosts = allposts.slice(0, pageSize);
+  return fourPosts;
+};
+
+/*ページ番号に応じた記事取得*/
+export const getPostsByPage = async (page: number) => {
+  const allPosts = await getAllPosts();
+
+  const startIndex = (page - 1) * NUMBER_OF_POSTS_PER_PAGE;
+  const endIndex = startIndex + NUMBER_OF_POSTS_PER_PAGE;
+
+  return allPosts.slice(startIndex, endIndex);
+};
+
+/*動的に変わるページ*/
+export const getNumberOfPages = async () => {
+  const allPosts = await getAllPosts();
+  return (
+    Math.floor(allPosts.length / NUMBER_OF_POSTS_PER_PAGE) +
+    (allPosts.length % NUMBER_OF_POSTS_PER_PAGE > 0 ? 1 : 0)
+  );
+};
+
+export const getPostsByTagAndPage = async (tagName: string, page: number) => {
+  const allPosts = await getAllPosts();
+  const posts = allPosts.filter((post) =>
+    post.tags.find((tag: string) => tag === tagName)
+  );
+
+  const startIndex = (page - 1) * NUMBER_OF_POSTS_PER_PAGE;
+  const endIndex = startIndex + NUMBER_OF_POSTS_PER_PAGE;
+
+  return posts.slice(startIndex, endIndex);
+};
+
+export const getNumberOfPagesByTag = async (tagName: string) => {
+  const allPosts = await getAllPosts();
+  const posts = allPosts.filter((post) =>
+    post.tags.find((tag: string) => tag === tagName)
+  );
+
+  return (
+    Math.floor(posts.length / NUMBER_OF_POSTS_PER_PAGE) +
+    (posts.length % NUMBER_OF_POSTS_PER_PAGE > 0 ? 1 : 0)
+  );
+};
+
+export const getAllTags = async (tagName: string) => {
+  const allPosts = await getAllPosts();
+
+  const allTagsDuplicationLists = allPosts.flatMap((post) => post.tags);
+  const set = new Set(allTagsDuplicationLists);
+  const allTagsList = Array.from(set);
+  // console.log("allTagsList", allTagsList);
+
+  return allTagsList;
+
 };
