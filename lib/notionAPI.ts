@@ -8,10 +8,23 @@ const notion = new Client({
 
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
+/*全ての記事を取得*/
 export const getAllPosts = async () => {
   const posts = await notion.databases.query({
     database_id: process.env.NOTION_DATABASE_ID as string,
     page_size: 100,
+    filter: {
+      property: "Published",
+      checkbox: {
+        equals: true,
+    },
+    },
+    sorts: [
+      {
+        property: "Date",
+        direction: "descending",
+      },
+    ],
   });
 
   const allPosts = posts.results;
@@ -21,6 +34,7 @@ export const getAllPosts = async () => {
   });
 };
 
+/*ページメタデータを取得*/
 const getPageMetaData = (post: any) => {
   // console.log("post", post);
   const getTags = (tags: any) => {
@@ -40,6 +54,7 @@ const getPageMetaData = (post: any) => {
     tags: getTags(post.properties.Tags.multi_select),
   };
 };
+
 
 export const getSinglePost = async (slug: string) => {
   const response = await notion.databases.query({
